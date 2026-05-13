@@ -1,0 +1,8 @@
+services:
+  maple:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maple-test
+    ports:
+      - "8080:80"
