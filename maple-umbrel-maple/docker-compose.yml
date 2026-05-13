@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  maple:
+    image: ghcr.io/spencersmithsite/maple-umbrel:latest
+    ports:
+      - "${APP_PORT}:80"
+    restart: unless-stopped
+    networks:
+      - default
+
+  maple-proxy:
+    image: ghcr.io/opensecretcloud/maple-proxy:latest
+    ports:
+      - "${APP_PROXY_PORT:-3001}:8080"
+    environment:
+      # Bind to all interfaces — default is 127.0.0.1 (loopback only),
+      # which makes Docker port mapping a no-op.
+      MAPLE_HOST: "0.0.0.0"
+      MAPLE_PORT: "8080"
+      MAPLE_BACKEND_URL: https://enclave.trymaple.ai
+      # Enable CORS so browser-based clients (Open WebUI, etc.) can call the proxy directly.
+      MAPLE_ENABLE_CORS: "true"
+      RUST_LOG: info
+      # Do NOT set MAPLE_API_KEY here — users supply their own key per request.
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
