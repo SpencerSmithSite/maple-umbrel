@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   maple:
     image: ghcr.io/spencersmithsite/maple-umbrel:latest
