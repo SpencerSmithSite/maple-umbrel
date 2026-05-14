@@ -39,23 +39,40 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Never cache the app shell — browsers must always fetch the latest entry point.
+    # Proxy all OpenAI-compatible API requests to the maple-proxy container.
+    # proxy_buffering off is critical — maple-proxy uses SSE streaming.
+    location /v1/ {
+        proxy_pass http://maple-proxy:8080/v1/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Connection '';
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 300s;
+    }
+
+    # Proxy health check to maple-proxy as well.
+    location /health {
+        proxy_pass http://maple-proxy:8080/health;
+        proxy_http_version 1.1;
+    }
+
+    # Never cache the app shell.
     location = /index.html {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
         add_header Expires "0";
     }
 
-    # Vite appends a content hash to every asset filename, so these are
-    # safe to cache for a year (immutable = browsers skip revalidation).
+    # Cache hashed assets forever.
     location ~* \.(js|css|woff2?|ttf|otf|eot|svg|png|jpg|jpeg|gif|ico|webp)$ {
         expires 1y;
         add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;
     }
 
-    # SPA fallback: unknown paths serve index.html so TanStack Router
-    # can handle client-side routing (HTML5 history mode).
+    # SPA fallback for TanStack Router.
     location / {
         try_files $uri $uri/ /index.html;
     }
