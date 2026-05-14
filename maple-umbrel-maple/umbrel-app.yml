@@ -23,7 +23,7 @@ dependencies: []
 repo: https://github.com/OpenSecretCloud/Maple
 support: https://github.com/OpenSecretCloud/Maple/issues
 gallery: []
-releaseNotes: "Fix nginx port to match Umbrel internal routing (port 3000)"
+releaseNotes: "Fix routing: nginx on host port 3001"
 submitter: SpencerSmithSite
 submission: https://github.com/SpencerSmithSite/maple-umbrel
 path: ""
