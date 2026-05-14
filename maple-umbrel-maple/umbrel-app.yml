@@ -4,7 +4,7 @@ name: Maple AI
 tagline: Private AI chat powered by secure enclaves
 icon: https://raw.githubusercontent.com/SpencerSmithSite/maple-umbrel/main/maple-umbrel-maple/icon.png
 category: AI
-version: "2.0.16-4"
+version: "2.0.17-1"
 port: 3001
 description: >-
   Maple is a private AI chat app that runs your conversations through Trusted Execution Environments (TEEs) — secure enclaves that guarantee no one, not even OpenSecret, can read your messages. Built on the OpenSecret platform, Maple provides end-to-end encrypted AI conversations with automatic sync across devices.
@@ -23,7 +23,7 @@ dependencies: []
 repo: https://github.com/OpenSecretCloud/Maple
 support: https://github.com/OpenSecretCloud/Maple/issues
 gallery: []
-releaseNotes: "Fix: polyfill crypto.randomUUID for HTTP (non-HTTPS) contexts"
+releaseNotes: "Update to latest Maple master branch; fixes attestation and message API compatibility with current enclave"
 submitter: SpencerSmithSite
 submission: https://github.com/SpencerSmithSite/maple-umbrel
 path: ""

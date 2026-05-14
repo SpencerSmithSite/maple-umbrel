@@ -3,7 +3,7 @@
 # ─── Stage 1: Build ────────────────────────────────────────────────────────────
 FROM oven/bun:latest AS builder
 
-ARG MAPLE_VERSION=v2.0.16
+ARG MAPLE_VERSION=master
 ARG BUILD_VITE_OPEN_SECRET_API_URL=https://enclave.trymaple.ai
 ARG BUILD_VITE_BILLING_API_URL=
 ARG BUILD_VITE_CLIENT_ID=ba5a14b5-d915-47b1-b7b1-afda52bc5fc6
