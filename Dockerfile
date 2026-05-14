@@ -34,7 +34,7 @@ COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 # Inline the nginx server block so the image is fully self-contained.
 COPY <<'EOF' /etc/nginx/conf.d/default.conf
 server {
-    listen 80;
+    listen 3000;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
@@ -62,4 +62,4 @@ server {
 }
 EOF
 
-EXPOSE 80
+EXPOSE 3000
