@@ -11,6 +11,8 @@ services:
 
   maple-proxy:
     image: ghcr.io/opensecretcloud/maple-proxy:latest
+    ports:
+      - "3002:8080"
     environment:
       # Bind to all interfaces — default is 127.0.0.1 (loopback only),
       # which makes Docker port mapping a no-op.
