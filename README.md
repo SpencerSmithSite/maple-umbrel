@@ -21,6 +21,17 @@ Maple is a private AI chat app that runs your conversations through Trusted Exec
    ```
 5. Click **Add** — Maple AI will appear in your app store under the **AI** category
 
+## Browser requirement (Chrome / Brave)
+
+Maple uses cryptographic APIs that browsers normally restrict to HTTPS. Since Umbrel serves apps over plain HTTP, you need to whitelist the app's origin once:
+
+1. Open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+2. Paste `http://umbrel.local:3001` into the text box
+3. Set the flag to **Enabled**
+4. Click **Relaunch**
+
+This is a one-time step per browser profile. Firefox does not require it.
+
 ## Links
 
 - Maple source code: https://github.com/OpenSecretCloud/Maple
