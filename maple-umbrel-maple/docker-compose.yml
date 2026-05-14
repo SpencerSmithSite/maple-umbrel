@@ -11,16 +11,11 @@ services:
       - default
 
   maple-proxy:
-    build:
-      context: ..
-      dockerfile: Dockerfile.proxy
+    image: ghcr.io/spencersmithsite/maple-umbrel-proxy:latest
     environment:
-      # Bind to all interfaces — default is 127.0.0.1 (loopback only),
-      # which makes Docker port mapping a no-op.
       MAPLE_HOST: "0.0.0.0"
       MAPLE_PORT: "8080"
       MAPLE_BACKEND_URL: https://enclave.trymaple.ai
-      # Enable CORS so browser-based clients (Open WebUI, etc.) can call the proxy directly.
       MAPLE_ENABLE_CORS: "true"
       RUST_LOG: info
       # Do NOT set MAPLE_API_KEY here — key-manager injects it via the shared volume.
@@ -33,12 +28,10 @@ services:
       - proxy-config:/config
 
   key-manager:
-    build:
-      context: ../key-manager
-      dockerfile: Dockerfile
+    image: ghcr.io/spencersmithsite/maple-umbrel-key-manager:latest
     environment:
-      PROXY_HOST: "umbrel.local"
-      PROXY_PORT: "3002"
+      PROXY_DISPLAY_HOST: "umbrel.local"
+      PROXY_DISPLAY_PORT: "3002"
     restart: unless-stopped
     networks:
       - default

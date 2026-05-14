@@ -33,8 +33,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, {
                 "running": True,
                 "keyConfigured": key_configured,
-                "host": os.environ.get("PROXY_HOST", "umbrel.local"),
-                "port": os.environ.get("PROXY_PORT", "3002"),
+                "host": os.environ.get("PROXY_DISPLAY_HOST", "umbrel.local"),
+                "port": os.environ.get("PROXY_DISPLAY_PORT", "3002"),
             })
         else:
             self.send_json(404, {"error": "not found"})
