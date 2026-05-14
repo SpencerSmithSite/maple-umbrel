@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image
+name: Build and Publish Docker Images
 
 on:
   push:
@@ -19,7 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # QEMU lets the amd64 runner execute arm64 instructions for cross-compilation.
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -33,11 +32,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Produces the tag list:
-      #   - "latest" on every trigger (main push or version tag)
-      #   - "v1.2.3" only when the trigger is a semver tag
-      - name: Extract image metadata
-        id: meta
+      # ── maple-umbrel (main web UI) ──────────────────────────────────────────
+
+      - name: Extract metadata for maple-umbrel
+        id: meta-main
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/maple-umbrel
@@ -45,13 +43,60 @@ jobs:
             type=raw,value=latest
             type=semver,pattern={{version}}
 
-      - name: Build and push
+      - name: Build and push maple-umbrel
         uses: docker/build-push-action@v6
         with:
           context: .
+          dockerfile: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-main.outputs.tags }}
+          labels: ${{ steps.meta-main.outputs.labels }}
+          cache-from: type=gha,scope=maple-umbrel
+          cache-to: type=gha,mode=max,scope=maple-umbrel
+
+      # ── maple-umbrel-proxy (key-aware maple-proxy wrapper) ──────────────────
+
+      - name: Extract metadata for maple-umbrel-proxy
+        id: meta-proxy
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/maple-umbrel-proxy
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+
+      - name: Build and push maple-umbrel-proxy
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          dockerfile: Dockerfile.proxy
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-proxy.outputs.tags }}
+          labels: ${{ steps.meta-proxy.outputs.labels }}
+          cache-from: type=gha,scope=maple-umbrel-proxy
+          cache-to: type=gha,mode=max,scope=maple-umbrel-proxy
+
+      # ── maple-umbrel-key-manager ────────────────────────────────────────────
+
+      - name: Extract metadata for maple-umbrel-key-manager
+        id: meta-km
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/maple-umbrel-key-manager
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+
+      - name: Build and push maple-umbrel-key-manager
+        uses: docker/build-push-action@v6
+        with:
+          context: key-manager
+          dockerfile: key-manager/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-km.outputs.tags }}
+          labels: ${{ steps.meta-km.outputs.labels }}
+          cache-from: type=gha,scope=maple-umbrel-key-manager
+          cache-to: type=gha,mode=max,scope=maple-umbrel-key-manager
