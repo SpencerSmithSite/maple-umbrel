@@ -11,21 +11,18 @@ services:
       - default
 
   maple-proxy:
-    image: ghcr.io/spencersmithsite/maple-umbrel-proxy:latest
+    image: ghcr.io/opensecretcloud/maple-proxy:latest
     environment:
       MAPLE_HOST: "0.0.0.0"
       MAPLE_PORT: "8080"
       MAPLE_BACKEND_URL: https://enclave.trymaple.ai
       MAPLE_ENABLE_CORS: "true"
       RUST_LOG: info
-      # Do NOT set MAPLE_API_KEY here — key-manager injects it via the shared volume.
     ports:
       - "3002:8080"
     restart: unless-stopped
     networks:
       - default
-    volumes:
-      - proxy-config:/config
 
   key-manager:
     image: ghcr.io/spencersmithsite/maple-umbrel-key-manager:latest
