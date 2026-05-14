@@ -12,11 +12,11 @@ description: >-
 
   OpenAI-compatible API proxy
 
-  Maple also ships a local OpenAI-compatible proxy that forwards requests to the enclave. Connect any OpenAI-compatible client (Cursor, Open WebUI, LiteLLM, etc.) to:
+  Maple also exposes an OpenAI-compatible API endpoint on the same port as the main app. Connect any OpenAI-compatible client (Cursor, Open WebUI, LiteLLM, etc.) to:
 
-    http://umbrel.local:3001/v1
+    http://[umbrel-address]:[port]/v1/
 
-  Supply your Maple API key as the Bearer token. No MAPLE_API_KEY is set in the container — each client provides its own key per request.
+  Supply your Maple API key as the Bearer token. No separate port needed — the API is served alongside the web UI.
 developer: OpenSecret
 website: https://opensecret.cloud
 dependencies: []
