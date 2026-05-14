@@ -46,6 +46,9 @@ server {
     # variable (set $var below), which defers resolution to per-request.
     resolver 127.0.0.11 valid=30s;
 
+    # sub_filter rewrites HTML responses; gzip must be off for it to work.
+    gzip off;
+
     # Proxy all OpenAI-compatible API requests to the maple-proxy container.
     # proxy_buffering off is critical — maple-proxy uses SSE streaming.
     location /v1/ {
@@ -72,6 +75,8 @@ server {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
         add_header Expires "0";
+        sub_filter '</head>' '<script>if(!window.crypto.randomUUID){window.crypto.randomUUID=function(){return"10000000-1000-4000-8000-100000000000".replace(/[018]/g,function(c){return(+c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>+c/4).toString(16)})}}</script></head>';
+        sub_filter_once on;
     }
 
     # Cache hashed assets forever.
@@ -84,6 +89,8 @@ server {
     # SPA fallback for TanStack Router.
     location / {
         try_files $uri $uri/ /index.html;
+        sub_filter '</head>' '<script>if(!window.crypto.randomUUID){window.crypto.randomUUID=function(){return"10000000-1000-4000-8000-100000000000".replace(/[018]/g,function(c){return(+c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>+c/4).toString(16)})}}</script></head>';
+        sub_filter_once on;
     }
 }
 EOF
