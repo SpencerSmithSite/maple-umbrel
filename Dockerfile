@@ -7,14 +7,22 @@ ARG MAPLE_VERSION=master
 ARG BUILD_VITE_OPEN_SECRET_API_URL=https://enclave.trymaple.ai
 ARG BUILD_VITE_BILLING_API_URL=https://billing.opensecret.cloud
 ARG BUILD_VITE_CLIENT_ID=ba5a14b5-d915-47b1-b7b1-afda52bc5fc6
+ARG VITE_UMBREL_MODE=true
+ARG VITE_PROXY_HOST=umbrel.local
+ARG VITE_PROXY_PORT=3002
 
-# git is needed to clone; ca-certificates keeps TLS happy
+# git is needed to clone; patch is needed to apply umbrel customisations.
+# ca-certificates keeps TLS happy.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends git ca-certificates \
+ && apt-get install -y --no-install-recommends git ca-certificates patch \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 RUN git clone --depth=1 --branch ${MAPLE_VERSION} https://github.com/OpenSecretCloud/Maple .
+
+# Apply Umbrel-specific UI patches before the build.
+COPY patch/umbrel-local-proxy.patch .
+RUN patch -p1 < umbrel-local-proxy.patch
 
 WORKDIR /app/frontend
 
@@ -25,6 +33,9 @@ RUN bun install --frozen-lockfile
 ENV VITE_OPEN_SECRET_API_URL=$BUILD_VITE_OPEN_SECRET_API_URL
 ENV VITE_MAPLE_BILLING_API_URL=$BUILD_VITE_BILLING_API_URL
 ENV VITE_CLIENT_ID=$BUILD_VITE_CLIENT_ID
+ENV VITE_UMBREL_MODE=$VITE_UMBREL_MODE
+ENV VITE_PROXY_HOST=$VITE_PROXY_HOST
+ENV VITE_PROXY_PORT=$VITE_PROXY_PORT
 
 RUN bun run build
 
@@ -72,6 +83,14 @@ server {
         proxy_buffering off;
         proxy_cache off;
         proxy_read_timeout 300s;
+    }
+
+    # Proxy key-manager API for the Local Proxy tab UI.
+    location /api/proxy/ {
+        set $key_manager key-manager:8082;
+        proxy_pass http://$key_manager/api/proxy/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 
     # Proxy health check to maple-proxy as well.

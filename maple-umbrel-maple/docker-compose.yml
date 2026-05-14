@@ -5,14 +5,15 @@ services:
       - "3001:3000"
     depends_on:
       - maple-proxy
+      - key-manager
     restart: unless-stopped
     networks:
       - default
 
   maple-proxy:
-    image: ghcr.io/opensecretcloud/maple-proxy:latest
-    ports:
-      - "3002:8080"
+    build:
+      context: ..
+      dockerfile: Dockerfile.proxy
     environment:
       # Bind to all interfaces — default is 127.0.0.1 (loopback only),
       # which makes Docker port mapping a no-op.
@@ -22,11 +23,31 @@ services:
       # Enable CORS so browser-based clients (Open WebUI, etc.) can call the proxy directly.
       MAPLE_ENABLE_CORS: "true"
       RUST_LOG: info
-      # Do NOT set MAPLE_API_KEY here — users supply their own key per request.
+      # Do NOT set MAPLE_API_KEY here — key-manager injects it via the shared volume.
+    ports:
+      - "3002:8080"
     restart: unless-stopped
     networks:
       - default
+    volumes:
+      - proxy-config:/config
+
+  key-manager:
+    build:
+      context: ../key-manager
+      dockerfile: Dockerfile
+    environment:
+      PROXY_HOST: "umbrel.local"
+      PROXY_PORT: "3002"
+    restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      - proxy-config:/config
 
 networks:
   default:
     driver: bridge
+
+volumes:
+  proxy-config:
