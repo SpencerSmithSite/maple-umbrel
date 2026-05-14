@@ -18,17 +18,19 @@ services:
       MAPLE_BACKEND_URL: https://enclave.trymaple.ai
       MAPLE_ENABLE_CORS: "true"
       RUST_LOG: info
-    ports:
-      - "3002:8080"
     restart: unless-stopped
     networks:
       - default
 
   key-manager:
     image: ghcr.io/spencersmithsite/maple-umbrel-key-manager:latest
+    ports:
+      - "3002:8083"
     environment:
       PROXY_DISPLAY_HOST: "umbrel.local"
       PROXY_DISPLAY_PORT: "3002"
+      UPSTREAM_HOST: "maple-proxy"
+      UPSTREAM_PORT: "8080"
     restart: unless-stopped
     networks:
       - default
