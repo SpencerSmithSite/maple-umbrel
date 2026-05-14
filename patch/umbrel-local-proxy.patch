@@ -1,0 +1,289 @@
+--- a/frontend/src/components/apikeys/ApiKeyDashboard.tsx
++++ b/frontend/src/components/apikeys/ApiKeyDashboard.tsx
+@@ -36,6 +36,7 @@
+ export function ApiKeyDashboard({ showCreditSuccessMessage = false }: ApiKeyDashboardProps) {
+   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+   const isTauriDesktopPlatform = isTauriDesktop();
++  const isUmbrelMode = import.meta.env.VITE_UMBREL_MODE === 'true';
+   const { listApiKeys, auth, createApiKey } = useOpenSecret();
+   const { billingStatus } = useLocalState();
+   const navigate = useNavigate();
+@@ -210,7 +211,7 @@
+ 
+       <Tabs defaultValue="credits" className="mt-4">
+         <TabsList
+-          className={`grid w-full ${isTauriDesktopPlatform ? "grid-cols-3" : "grid-cols-2"}`}
++          className={`grid w-full ${(isTauriDesktopPlatform || isUmbrelMode) ? "grid-cols-3" : "grid-cols-2"}`}
+         >
+           <TabsTrigger value="credits" className="flex items-center gap-2">
+             <CreditCard className="h-4 w-4" />
+@@ -220,7 +221,7 @@
+             <Key className="h-4 w-4" />
+             API Keys
+           </TabsTrigger>
+-          {isTauriDesktopPlatform && (
++          {(isTauriDesktopPlatform || isUmbrelMode) && (
+             <TabsTrigger value="local-proxy" className="flex items-center gap-2">
+               <Server className="h-4 w-4" />
+               Local Proxy
+@@ -262,7 +263,7 @@
+           </div>
+         </TabsContent>
+ 
+-        {isTauriDesktopPlatform && (
++        {(isTauriDesktopPlatform || isUmbrelMode) && (
+           <TabsContent value="local-proxy" className="mt-4">
+             <div className="space-y-4">
+               <ProxyConfigSection
+--- a/frontend/src/components/apikeys/ProxyConfigSection.tsx
++++ b/frontend/src/components/apikeys/ProxyConfigSection.tsx
+@@ -12,6 +12,237 @@
+ interface ProxyConfigSectionProps {
+   apiKeys: Array<{ name: string; created_at: string }>;
+   onRequestNewApiKey: (name: string) => Promise<string>;
++}
++
++const IS_UMBREL = import.meta.env.VITE_UMBREL_MODE === "true";
++const UMBREL_HOST = import.meta.env.VITE_PROXY_HOST || "umbrel.local";
++const UMBREL_PORT = import.meta.env.VITE_PROXY_PORT || "3002";
++
++interface UmbrelStatus {
++  running: boolean;
++  keyConfigured: boolean;
++  host: string;
++  port: string;
++}
++
++async function fetchUmbrelStatus(): Promise<UmbrelStatus> {
++  const res = await fetch("/api/proxy/status");
++  return res.json();
++}
++
++async function saveUmbrelKey(apiKey: string): Promise<void> {
++  const res = await fetch("/api/proxy/key", {
++    method: "POST",
++    headers: { "Content-Type": "application/json" },
++    body: JSON.stringify({ apiKey })
++  });
++  if (!res.ok) throw new Error("Failed to save key");
++}
++
++async function deleteUmbrelKey(): Promise<void> {
++  const res = await fetch("/api/proxy/key", { method: "DELETE" });
++  if (!res.ok) throw new Error("Failed to remove key");
++}
++
++function UmbrelProxySection() {
++  const [status, setStatus] = useState<UmbrelStatus | null>(null);
++  const [apiKeyInput, setApiKeyInput] = useState("");
++  const [isSaving, setIsSaving] = useState(false);
++  const [copied, setCopied] = useState(false);
++  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
++
++  const host = status?.host || UMBREL_HOST;
++  const port = status?.port || UMBREL_PORT;
++  const proxyUrl = `http://${host}:${port}/v1`;
++
++  useEffect(() => {
++    fetchUmbrelStatus()
++      .then(setStatus)
++      .catch((e) => console.error("Failed to load proxy status:", e));
++  }, []);
++
++  const handleSaveKey = async () => {
++    if (!apiKeyInput.trim()) return;
++    setIsSaving(true);
++    setMessage(null);
++    try {
++      await saveUmbrelKey(apiKeyInput.trim());
++      setApiKeyInput("");
++      const updated = await fetchUmbrelStatus();
++      setStatus(updated);
++      setMessage({ type: "success", text: "API key saved. Proxy will reload within 10 seconds." });
++    } catch {
++      setMessage({ type: "error", text: "Failed to save API key." });
++    } finally {
++      setIsSaving(false);
++    }
++  };
++
++  const handleRemoveKey = async () => {
++    setIsSaving(true);
++    setMessage(null);
++    try {
++      await deleteUmbrelKey();
++      const updated = await fetchUmbrelStatus();
++      setStatus(updated);
++      setMessage({ type: "success", text: "API key removed." });
++    } catch {
++      setMessage({ type: "error", text: "Failed to remove API key." });
++    } finally {
++      setIsSaving(false);
++    }
++  };
++
++  const copyProxyUrl = () => {
++    navigator.clipboard.writeText(proxyUrl);
++    setCopied(true);
++    setTimeout(() => setCopied(false), 2000);
++  };
++
++  return (
++    <>
++      {message && (
++        <Alert
++          className={`${message.type === "error" ? "border-destructive/50" : "border-maple-success/40"} mb-3`}
++        >
++          <div className="flex items-start gap-2">
++            {message.type === "error" ? (
++              <AlertCircle className="h-4 w-4 flex-shrink-0" />
++            ) : (
++              <CheckCircle className="h-4 w-4 flex-shrink-0 text-maple-success" />
++            )}
++            <AlertDescription className="text-xs">{message.text}</AlertDescription>
++          </div>
++        </Alert>
++      )}
++
++      <div className="flex items-center justify-between mb-3">
++        <h3 className="text-sm font-medium flex items-center gap-2">
++          <Server className="h-4 w-4" />
++          Local OpenAI Proxy
++        </h3>
++        <div className="flex items-center gap-2">
++          <span className="text-xs text-muted-foreground">Always running</span>
++          <div className="h-2 w-2 rounded-full bg-maple-success" />
++        </div>
++      </div>
++
++      <Card className="p-4 space-y-4">
++        {/* Host / Port (read-only) */}
++        <div className="grid grid-cols-2 gap-4">
++          <div>
++            <Label className="text-xs">Host</Label>
++            <Input value={host} readOnly className="h-8 text-sm" />
++          </div>
++          <div>
++            <Label className="text-xs">Port</Label>
++            <Input value={port} readOnly className="h-8 text-sm" />
++          </div>
++        </div>
++
++        {/* Proxy URL */}
++        <div>
++          <Label className="text-xs">Proxy URL</Label>
++          <div className="flex gap-2">
++            <Input value={proxyUrl} readOnly className="h-8 text-sm font-mono" />
++            <Button size="sm" variant="outline" onClick={copyProxyUrl} className="h-8">
++              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
++            </Button>
++          </div>
++          <p className="text-xs text-muted-foreground mt-1">
++            Use this URL as your OpenAI base URL in any client
++          </p>
++        </div>
++
++        {/* API Key management */}
++        <div className="pt-2 border-t space-y-2">
++          <div className="flex items-center justify-between">
++            <Label className="text-xs">API Key</Label>
++            {status && (
++              <span
++                className={`text-xs font-medium ${status.keyConfigured ? "text-maple-success" : "text-muted-foreground"}`}
++              >
++                {status.keyConfigured ? "Key configured ✓" : "No key set"}
++              </span>
++            )}
++          </div>
++          <div className="flex gap-2">
++            <Input
++              type="password"
++              placeholder="Paste your Maple API key…"
++              value={apiKeyInput}
++              onChange={(e) => setApiKeyInput(e.target.value)}
++              className="h-8 text-sm"
++              onKeyDown={(e) => e.key === "Enter" && handleSaveKey()}
++            />
++            <Button
++              size="sm"
++              onClick={handleSaveKey}
++              disabled={isSaving || !apiKeyInput.trim()}
++              className="h-8"
++            >
++              {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
++            </Button>
++          </div>
++          {status?.keyConfigured && (
++            <Button
++              size="sm"
++              variant="ghost"
++              onClick={handleRemoveKey}
++              disabled={isSaving}
++              className="h-7 text-xs text-muted-foreground"
++            >
++              Remove key
++            </Button>
++          )}
++          <p className="text-xs text-muted-foreground">
++            Your API key is stored on this Umbrel node and injected into the proxy. Create a key
++            under the API Keys tab.
++          </p>
++        </div>
++      </Card>
++
++      {/* Usage Examples */}
++      <div className="space-y-3">
++        <Card className="p-3">
++          <div className="text-xs">
++            <strong>Python Example:</strong>
++            <pre className="mt-2 text-xs bg-background p-2 rounded border overflow-x-auto">
++              <code>{`from openai import OpenAI
++client = OpenAI(
++  base_url="${proxyUrl}",
++  api_key="anything"  # API key handled by proxy
++)
++
++response = client.chat.completions.create(
++  model="${QUICK_MODEL_ALIAS}",
++  messages=[{"role": "user", "content": "Hello!"}],
++  stream=True
++)
++
++for chunk in response:
++    print(chunk.choices[0].delta.content or "", end="")`}</code>
++            </pre>
++          </div>
++        </Card>
++
++        <Card className="p-3">
++          <div className="text-xs">
++            <strong>cURL Example:</strong>
++            <pre className="mt-2 text-xs bg-background p-2 rounded border overflow-x-auto">
++              <code>{`curl -N ${proxyUrl}/chat/completions \\
++  -H "Content-Type: application/json" \\
++  -d '{
++    "model": "${QUICK_MODEL_ALIAS}",
++    "messages": [{"role": "user", "content": "Hello!"}],
++    "stream": true
++  }'`}</code>
++            </pre>
++          </div>
++        </Card>
++      </div>
++    </>
++  );
+ }
+ 
+ export function ProxyConfigSection({ apiKeys, onRequestNewApiKey }: ProxyConfigSectionProps) {
+@@ -148,6 +379,11 @@
+     setCopied(true);
+     setTimeout(() => setCopied(false), 2000);
+   };
++
++  // Umbrel: render the simplified always-running UI
++  if (IS_UMBREL) {
++    return <UmbrelProxySection />;
++  }
+ 
+   if (!isTauriDesktopPlatform) {
+     return null; // Don't show proxy config on non-desktop platforms (includes mobile)

@@ -1,0 +1,4 @@
+FROM ghcr.io/opensecretcloud/maple-proxy:latest
+COPY proxy-entrypoint.sh /proxy-entrypoint.sh
+RUN chmod +x /proxy-entrypoint.sh
+ENTRYPOINT ["/proxy-entrypoint.sh"]
