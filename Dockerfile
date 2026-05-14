@@ -6,6 +6,7 @@ FROM oven/bun:latest AS builder
 ARG MAPLE_VERSION=v2.0.16
 ARG BUILD_VITE_OPEN_SECRET_API_URL=https://enclave.trymaple.ai
 ARG BUILD_VITE_BILLING_API_URL=
+ARG BUILD_VITE_CLIENT_ID=ba5a14b5-d915-47b1-b7b1-afda52bc5fc6
 
 # git is needed to clone; ca-certificates keeps TLS happy
 RUN apt-get update \
@@ -23,6 +24,7 @@ RUN bun install --frozen-lockfile
 # These become import.meta.env.VITE_* constants in the compiled JS.
 ENV VITE_OPEN_SECRET_API_URL=$BUILD_VITE_OPEN_SECRET_API_URL
 ENV VITE_MAPLE_BILLING_API_URL=$BUILD_VITE_BILLING_API_URL
+ENV VITE_CLIENT_ID=$BUILD_VITE_CLIENT_ID
 
 RUN bun run build
 
