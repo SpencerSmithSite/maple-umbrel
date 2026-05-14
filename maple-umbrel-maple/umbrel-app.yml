@@ -4,26 +4,19 @@ name: Maple AI
 tagline: Private AI chat powered by secure enclaves
 icon: https://raw.githubusercontent.com/SpencerSmithSite/maple-umbrel/main/maple-umbrel-maple/icon.png
 category: AI
-version: "2.0.17-6"
+version: "2.0.17-8"
 port: 3001
 description: >-
-  Maple is a private AI chat app that runs your conversations through Trusted Execution Environments (TEEs) — secure enclaves that guarantee no one, not even OpenSecret, can read your messages. Built on the OpenSecret platform, Maple provides end-to-end encrypted AI conversations with automatic sync across devices.
+  Maple is a private AI chat app powered by end-to-end encryption and Trusted Execution Environments (TEEs) — your conversations are encrypted on your device and processed in secure hardware, invisible even to Maple. Includes an always-on OpenAI-compatible proxy at umbrel.local:3002 for use with Cursor, Open WebUI, and other AI tools.
 
-
-  OpenAI-compatible API proxy
-
-  Maple also exposes an OpenAI-compatible API endpoint on the same port as the main app. Connect any OpenAI-compatible client (Cursor, Open WebUI, LiteLLM, etc.) to:
-
-    http://[umbrel-address]:[port]/v1/
-
-  Supply your Maple API key as the Bearer token. No separate port needed — the API is served alongside the web UI.
+  ⚠️ First-time setup: Maple's TEE security verification requires browser cryptographic APIs that only work over HTTPS. When accessing via http://umbrel.local, add http://umbrel.local:3001 to the secure origins list in your browser (Chrome: chrome://flags/#unsafely-treat-insecure-origin-as-secure, Firefox: about:config → dom.securecontext.allowlist). Not required if using Cloudflare Tunnel or Tor Browser. See the GitHub repo README for full instructions.
 developer: OpenSecret
 website: https://opensecret.cloud
 dependencies: []
 repo: https://github.com/OpenSecretCloud/Maple
 support: https://github.com/OpenSecretCloud/Maple/issues
 gallery: []
-releaseNotes: "Fix: add /api/proxy/ nginx route to key-manager"
+releaseNotes: "Add browser setup instructions to README and app description"
 submitter: SpencerSmithSite
 submission: https://github.com/SpencerSmithSite/maple-umbrel
 path: ""
