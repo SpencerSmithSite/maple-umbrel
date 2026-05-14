@@ -87,10 +87,11 @@ server {
 
     # Proxy key-manager API for the Local Proxy tab UI.
     location /api/proxy/ {
-        set $key_manager key-manager:8082;
-        proxy_pass http://$key_manager/api/proxy/;
+        proxy_pass http://key-manager:8082/api/proxy/;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 30s;
     }
 
     # Proxy health check to maple-proxy as well.
