@@ -39,10 +39,16 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Use Docker's embedded DNS so nginx resolves container hostnames at
+    # request time rather than startup. Required when proxy_pass uses a
+    # variable (set $var below), which defers resolution to per-request.
+    resolver 127.0.0.11 valid=30s;
+
     # Proxy all OpenAI-compatible API requests to the maple-proxy container.
     # proxy_buffering off is critical — maple-proxy uses SSE streaming.
     location /v1/ {
-        proxy_pass http://maple-proxy:8080/v1/;
+        set $maple_proxy maple-proxy:8080;
+        proxy_pass http://$maple_proxy/v1/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -54,7 +60,8 @@ server {
 
     # Proxy health check to maple-proxy as well.
     location /health {
-        proxy_pass http://maple-proxy:8080/health;
+        set $maple_proxy maple-proxy:8080;
+        proxy_pass http://$maple_proxy/health;
         proxy_http_version 1.1;
     }
 
