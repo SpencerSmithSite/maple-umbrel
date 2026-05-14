@@ -5,7 +5,7 @@ FROM oven/bun:latest AS builder
 
 ARG MAPLE_VERSION=master
 ARG BUILD_VITE_OPEN_SECRET_API_URL=https://enclave.trymaple.ai
-ARG BUILD_VITE_BILLING_API_URL=
+ARG BUILD_VITE_BILLING_API_URL=https://billing.opensecret.cloud
 ARG BUILD_VITE_CLIENT_ID=ba5a14b5-d915-47b1-b7b1-afda52bc5fc6
 
 # git is needed to clone; ca-certificates keeps TLS happy
@@ -48,6 +48,17 @@ server {
 
     # sub_filter rewrites HTML responses; gzip must be off for it to work.
     gzip off;
+
+    # Proxy billing API requests to billing.opensecret.cloud.
+    # Must appear before the /v1/ block; nginx longest-prefix matching
+    # selects /v1/maple/ over /v1/ for these paths.
+    location /v1/maple/ {
+        proxy_pass https://billing.opensecret.cloud/v1/maple/;
+        proxy_http_version 1.1;
+        proxy_set_header Host billing.opensecret.cloud;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_ssl_server_name on;
+    }
 
     # Proxy all OpenAI-compatible API requests to the maple-proxy container.
     # proxy_buffering off is critical — maple-proxy uses SSE streaming.
