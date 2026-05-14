@@ -55,29 +55,6 @@ jobs:
           cache-from: type=gha,scope=maple-umbrel
           cache-to: type=gha,mode=max,scope=maple-umbrel
 
-      # ── maple-umbrel-proxy (key-aware maple-proxy wrapper) ──────────────────
-
-      - name: Extract metadata for maple-umbrel-proxy
-        id: meta-proxy
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/maple-umbrel-proxy
-          tags: |
-            type=raw,value=latest
-            type=semver,pattern={{version}}
-
-      - name: Build and push maple-umbrel-proxy
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          dockerfile: Dockerfile.proxy
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta-proxy.outputs.tags }}
-          labels: ${{ steps.meta-proxy.outputs.labels }}
-          cache-from: type=gha,scope=maple-umbrel-proxy
-          cache-to: type=gha,mode=max,scope=maple-umbrel-proxy
-
       # ── maple-umbrel-key-manager ────────────────────────────────────────────
 
       - name: Extract metadata for maple-umbrel-key-manager
